@@ -24,7 +24,7 @@
     <p>Ingresá para administrar empresas y planillas.</p>
     <div class="field"><label>Correo</label><input id="loginEmail" type="email" autocomplete="username"></div>
     <div class="field"><label>Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
-    <button type="button" class="primary" id="loginBtn" style="width:100%">Ingresar</button>
+    <button type="button" class="primary" id="loginBtn" onclick="doLogin(event)" style="width:100%">Ingresar</button>
     <div class="login-error" id="loginError"></div>
   </div>
 </section>
@@ -76,10 +76,29 @@
 </section>
 <div id="picker" class="picker"></div><div id="toast" class="toast hidden"></div>
 
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
-import { getFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, query, orderBy, where, serverTimestamp, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
+<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore-compat.js"></script>
+<script>
+// Adaptador para usar Firebase Compat en GitHub Pages sin bundler.
+const initializeApp = (config) => firebase.initializeApp(config);
+const getAuth = (app) => app.auth();
+const onAuthStateChanged = (auth, cb) => auth.onAuthStateChanged(cb);
+const signInWithEmailAndPassword = (auth, email, password) => auth.signInWithEmailAndPassword(email, password);
+const signOut = (auth) => auth.signOut();
+const getFirestore = (app) => app.firestore();
+const collection = (db, ...path) => db.collection(path.join('/'));
+const doc = (db, ...path) => db.doc(path.join('/'));
+const addDoc = (ref, data) => ref.add(data);
+const getDoc = (ref) => ref.get();
+const getDocs = (ref) => ref.get();
+const setDoc = (ref, data, options) => options ? ref.set(data, options) : ref.set(data);
+const updateDoc = (ref, data) => ref.update(data);
+const deleteDoc = (ref) => ref.delete();
+const orderBy = (field, direction='asc') => q => q.orderBy(field, direction);
+const where = (field, op, value) => q => q.where(field, op, value);
+const query = (ref, ...constraints) => constraints.reduce((q, constraint) => constraint(q), ref);
+const serverTimestamp = () => firebase.firestore.FieldValue.serverTimestamp();
 
 // ============================================================
 // PEGÁ ACÁ EL firebaseConfig QUE TE DA FIREBASE > APP WEB
@@ -97,6 +116,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+console.log('Firebase inicializado correctamente:', app.options.projectId);
 
 const $ = id => document.getElementById(id);
 let currentCompany = null;
@@ -149,9 +169,8 @@ onAuthStateChanged(auth, async user=>{
 });
 
 const loginBtn=$('loginBtn');
-if(loginBtn){
-  loginBtn.addEventListener('click', async (event)=>{
-    event.preventDefault();
+async function doLogin(event){
+    if(event) event.preventDefault();
     const email=$('loginEmail').value.trim();
     const password=$('loginPassword').value;
     showLoginError('');
@@ -174,15 +193,15 @@ if(loginBtn){
         'auth/network-request-failed':'No se pudo conectar con Firebase. Revisá tu conexión.',
         'auth/operation-not-allowed':'El acceso por correo y contraseña no está habilitado en Firebase.'
       };
-      showLoginError(messages[e.code] || `Error de Firebase: ${e.code||'desconocido'}`);
+      showLoginError(messages[e.code] || `Error de Firebase: ${e.code||'desconocido'}${e.message ? ' — '+e.message : ''}`);
     }finally{
       loginBtn.disabled=false;
       loginBtn.textContent='Ingresar';
     }
-  });
 }
+window.doLogin=doLogin;
 
-$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')loginBtn?.click()});
+$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin(e)});
 $('logoutBtn').onclick=()=>signOut(auth);
 $('navCompanies').onclick=async()=>{await loadCompanies();show('companiesView')};
 $('navNew').onclick=()=>startNewRecord();
