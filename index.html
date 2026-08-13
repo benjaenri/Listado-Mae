@@ -24,7 +24,7 @@
     <p>Ingresá para administrar empresas y planillas.</p>
     <div class="field"><label>Correo</label><input id="loginEmail" type="email" autocomplete="username"></div>
     <div class="field"><label>Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
-    <button type="button" class="primary" id="loginBtn" onclick="doLogin(event)" style="width:100%">Ingresar</button>
+    <button type="button" class="primary" id="loginBtn" style="width:100%">Ingresar</button>
     <div class="login-error" id="loginError"></div>
   </div>
 </section>
@@ -76,33 +76,7 @@
 </section>
 <div id="picker" class="picker"></div><div id="toast" class="toast hidden"></div>
 
-<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore-compat.js"></script>
 <script>
-// Adaptador para usar Firebase Compat en GitHub Pages sin bundler.
-const initializeApp = (config) => firebase.initializeApp(config);
-const getAuth = (app) => app.auth();
-const onAuthStateChanged = (auth, cb) => auth.onAuthStateChanged(cb);
-const signInWithEmailAndPassword = (auth, email, password) => auth.signInWithEmailAndPassword(email, password);
-const signOut = (auth) => auth.signOut();
-const getFirestore = (app) => app.firestore();
-const collection = (db, ...path) => db.collection(path.join('/'));
-const doc = (db, ...path) => db.doc(path.join('/'));
-const addDoc = (ref, data) => ref.add(data);
-const getDoc = (ref) => ref.get();
-const getDocs = (ref) => ref.get();
-const setDoc = (ref, data, options) => options ? ref.set(data, options) : ref.set(data);
-const updateDoc = (ref, data) => ref.update(data);
-const deleteDoc = (ref) => ref.delete();
-const orderBy = (field, direction='asc') => q => q.orderBy(field, direction);
-const where = (field, op, value) => q => q.where(field, op, value);
-const query = (ref, ...constraints) => constraints.reduce((q, constraint) => constraint(q), ref);
-const serverTimestamp = () => firebase.firestore.FieldValue.serverTimestamp();
-
-// ============================================================
-// PEGÁ ACÁ EL firebaseConfig QUE TE DA FIREBASE > APP WEB
-// ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyBwV5SHupEMnInaSOs7lVcQHpHeOQtnNNA",
   authDomain: "listado-de-herramientas.firebaseapp.com",
@@ -113,12 +87,15 @@ const firebaseConfig = {
   measurementId: "G-L3E04SEMRP"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-console.log('Firebase inicializado correctamente:', app.options.projectId);
+// Esta versión no depende del SDK JS de Firebase para el login.
+// Usa las APIs oficiales de Firebase Auth y Firestore directamente,
+// lo que evita problemas de módulos/CDN en GitHub Pages.
+const AUTH_URL = 'https://identitytoolkit.googleapis.com/v1';
+const TOKEN_URL = 'https://securetoken.googleapis.com/v1/token';
+const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents`;
 
 const $ = id => document.getElementById(id);
+let session = JSON.parse(localStorage.getItem('maeFirebaseSession') || 'null');
 let currentCompany = null;
 let currentRecordId = null;
 let companiesCache = [];
@@ -140,135 +117,119 @@ const CATALOG = {
   }
 };
 
-function showToast(msg){$('toast').textContent=msg;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),2600)}
+function showToast(msg){$('toast').textContent=msg;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),2800)}
 function show(view){['companiesView','recordsView','formView'].forEach(v=>$(v).classList.add('hidden'));$(view).classList.remove('hidden')}
-function escapeHtml(s=''){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function escapeHtml(s=''){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 function today(){return new Date().toISOString().slice(0,10)}
+function showLoginError(message){$('loginError').textContent=message||''}
 
-function showLoginError(message){
-  const box=$('loginError');
-  if(box) box.textContent=message;
+function fsValue(v){
+  if(v === null || v === undefined) return {nullValue:null};
+  if(typeof v === 'boolean') return {booleanValue:v};
+  if(typeof v === 'number' && Number.isFinite(v)) return {doubleValue:v};
+  if(Array.isArray(v)) return {arrayValue:{values:v.map(fsValue)}};
+  if(typeof v === 'object') { const fields={}; for(const [k,val] of Object.entries(v)) fields[k]=fsValue(val); return {mapValue:{fields}}; }
+  return {stringValue:String(v)};
 }
+function fromFsValue(v){
+  if(!v) return null;
+  if('stringValue' in v) return v.stringValue;
+  if('integerValue' in v) return Number(v.integerValue);
+  if('doubleValue' in v) return Number(v.doubleValue);
+  if('booleanValue' in v) return v.booleanValue;
+  if('nullValue' in v) return null;
+  if('timestampValue' in v) return v.timestampValue;
+  if('arrayValue' in v) return (v.arrayValue.values||[]).map(fromFsValue);
+  if('mapValue' in v) { const o={}; for(const [k,val] of Object.entries(v.mapValue.fields||{})) o[k]=fromFsValue(val); return o; }
+  return null;
+}
+function encodeFields(data){const fields={};for(const [k,v] of Object.entries(data)){if(v!==undefined)fields[k]=fsValue(v)}return {fields}}
+function decodeDoc(d){const name=d.name||'';const id=name.split('/').pop();const o={id};for(const [k,v] of Object.entries(d.fields||{}))o[k]=fromFsValue(v);return o}
+function authHeaders(){return session?.idToken?{Authorization:`Bearer ${session.idToken}`}:{} }
 
-onAuthStateChanged(auth, async user=>{
+async function authRequest(endpoint, body){
+  const r=await fetch(`${AUTH_URL}/${endpoint}?key=${encodeURIComponent(firebaseConfig.apiKey)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data=await r.json();
+  if(!r.ok){const e=new Error(data.error?.message||'Error de autenticación');e.code=data.error?.message||'AUTH_ERROR';throw e}
+  return data;
+}
+async function login(email,password){
+  const data=await authRequest('accounts:signInWithPassword',{email,password,returnSecureToken:true});
+  session={idToken:data.idToken,refreshToken:data.refreshToken,localId:data.localId,email:data.email,expiresAt:Date.now()+Number(data.expiresIn||3600)*1000};
+  localStorage.setItem('maeFirebaseSession',JSON.stringify(session));
+  startRefreshTimer();
+}
+async function refreshSession(){
+  if(!session?.refreshToken)return false;
   try{
-    if(user){
-      $('login').classList.add('hidden');
-      $('app').classList.remove('hidden');
-      $('currentUser').textContent=user.email||'';
-      await loadCompanies();
-      show('companiesView');
-    }else{
-      $('app').classList.add('hidden');
-      $('login').classList.remove('hidden');
-    }
-  }catch(e){
-    console.error('Error al cargar la aplicación:',e);
-    showLoginError('Sesión iniciada, pero hubo un error al cargar los datos. Revisá la consola.');
-  }
-});
+    const r=await fetch(`${TOKEN_URL}?key=${encodeURIComponent(firebaseConfig.apiKey)}`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'refresh_token',refresh_token:session.refreshToken})});
+    const data=await r.json(); if(!r.ok)throw new Error(data.error?.message||'No se pudo renovar la sesión');
+    session.idToken=data.id_token;session.refreshToken=data.refresh_token||session.refreshToken;session.localId=data.user_id||session.localId;session.expiresAt=Date.now()+Number(data.expires_in||3600)*1000;localStorage.setItem('maeFirebaseSession',JSON.stringify(session));return true;
+  }catch(e){console.error(e);logout(false);return false}
+}
+let refreshTimer=null;
+function startRefreshTimer(){if(refreshTimer)clearInterval(refreshTimer);refreshTimer=setInterval(()=>{if(session&&Date.now()>session.expiresAt-300000)refreshSession()},60000)}
+async function ensureSession(){if(!session)return false;if(Date.now()>session.expiresAt-120000)return refreshSession();return true}
+function logout(showLogin=true){session=null;localStorage.removeItem('maeFirebaseSession');if(refreshTimer)clearInterval(refreshTimer);$('app').classList.add('hidden');$('login').classList.toggle('hidden',!showLogin);if(showLogin)showLoginError('')}
 
-const loginBtn=$('loginBtn');
+async function firestoreRequest(path,options={}){
+  if(!await ensureSession())throw new Error('La sesión expiró. Volvé a ingresar.');
+  const r=await fetch(`${FIRESTORE_BASE}/${path}`,{...options,headers:{'Content-Type':'application/json',...authHeaders(),...(options.headers||{})}});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok){const msg=data.error?.message||`Firestore HTTP ${r.status}`;const e=new Error(msg);e.httpStatus=r.status;throw e}
+  return data;
+}
+async function listCollection(path){
+  const data=await firestoreRequest(path+'?pageSize=300');return (data.documents||[]).map(decodeDoc)
+}
+async function createDocument(path,id,data){return firestoreRequest(`${path}?documentId=${encodeURIComponent(id)}`,{method:'POST',body:JSON.stringify(encodeFields(data))})}
+async function updateDocument(path,data){return firestoreRequest(path,{method:'PATCH',body:JSON.stringify(encodeFields(data))})}
+function newId(){return crypto.randomUUID ? crypto.randomUUID().replaceAll('-','') : 'id'+Date.now()+Math.random().toString(36).slice(2)}
+
 async function doLogin(event){
-    if(event) event.preventDefault();
-    const email=$('loginEmail').value.trim();
-    const password=$('loginPassword').value;
-    showLoginError('');
-    if(!email || !password){
-      showLoginError('Completá correo y contraseña.');
-      return;
-    }
-    loginBtn.disabled=true;
-    loginBtn.textContent='Ingresando...';
-    try{
-      await signInWithEmailAndPassword(auth,email,password);
-    }catch(e){
-      console.error('Firebase Authentication:',e);
-      const messages={
-        'auth/invalid-credential':'Correo o contraseña incorrectos.',
-        'auth/invalid-email':'El correo no tiene un formato válido.',
-        'auth/user-disabled':'Este usuario está deshabilitado.',
-        'auth/too-many-requests':'Demasiados intentos. Esperá unos minutos y probá nuevamente.',
-        'auth/unauthorized-domain':'Este dominio todavía no está autorizado en Firebase.',
-        'auth/network-request-failed':'No se pudo conectar con Firebase. Revisá tu conexión.',
-        'auth/operation-not-allowed':'El acceso por correo y contraseña no está habilitado en Firebase.'
-      };
-      showLoginError(messages[e.code] || `Error de Firebase: ${e.code||'desconocido'}${e.message ? ' — '+e.message : ''}`);
-    }finally{
-      loginBtn.disabled=false;
-      loginBtn.textContent='Ingresar';
-    }
+  event?.preventDefault();
+  const email=$('loginEmail').value.trim();const password=$('loginPassword').value;showLoginError('');
+  if(!email||!password){showLoginError('Completá correo y contraseña.');return}
+  const btn=$('loginBtn');btn.disabled=true;btn.textContent='Ingresando...';
+  try{await login(email,password);await enterApp()}catch(e){console.error('Login:',e);const map={'INVALID_LOGIN_CREDENTIALS':'Correo o contraseña incorrectos.','EMAIL_NOT_FOUND':'Correo o contraseña incorrectos.','INVALID_PASSWORD':'Correo o contraseña incorrectos.','USER_DISABLED':'Este usuario está deshabilitado.','TOO_MANY_ATTEMPTS_TRY_LATER':'Demasiados intentos. Esperá unos minutos.','OPERATION_NOT_ALLOWED':'El acceso por correo y contraseña no está habilitado en Firebase.','EMAIL_EXISTS':'Ese correo ya existe.'};showLoginError(map[e.code]||`No se pudo ingresar: ${e.code||e.message}`)}finally{btn.disabled=false;btn.textContent='Ingresar'}
 }
 window.doLogin=doLogin;
 
-$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin(e)});
-$('logoutBtn').onclick=()=>signOut(auth);
-$('navCompanies').onclick=async()=>{await loadCompanies();show('companiesView')};
-$('navNew').onclick=()=>startNewRecord();
-$('newCompanyBtn').onclick=()=>createCompany();
-$('backCompanies').onclick=()=>{show('companiesView');loadCompanies()};
-$('backRecords').onclick=()=>{show('recordsView');loadRecords()};
-$('newRecordBtn').onclick=()=>startNewRecord();
-$('newFormBtn').onclick=()=>startNewRecord();
-$('saveBtn').onclick=()=>saveRecord(false);
-$('printBtn').onclick=()=>saveRecord(true);
-$('recordSearch').oninput=renderRecords;
+async function enterApp(){
+  $('login').classList.add('hidden');$('app').classList.remove('hidden');$('currentUser').textContent=session.email||'';startRefreshTimer();
+  try{await loadCompanies();show('companiesView')}catch(e){console.error(e);showLoginError('Ingresaste, pero no se pudieron cargar los datos. Revisá las reglas de Firestore.');}
+}
 
-async function loadCompanies(){
-  const snap=await getDocs(query(collection(db,'companies'),orderBy('name')));companiesCache=snap.docs.map(d=>({id:d.id,...d.data()}));renderCompanies();}
-function renderCompanies(){
-  const grid=$('companyGrid');grid.innerHTML='';
-  if(!companiesCache.length){grid.innerHTML='<div class="empty">Todavía no hay empresas. Creá la primera para comenzar.</div>';return}
-  companiesCache.forEach(c=>{const el=document.createElement('div');el.className='company-card';el.innerHTML=`<h3>${escapeHtml(c.name)}</h3><small>${escapeHtml(c.address||'Sin dirección')}</small><div class="company-actions"><button class="primary open-company">Abrir</button><button class="mini edit-company">Editar</button></div>`;el.querySelector('.open-company').onclick=()=>openCompany(c);el.querySelector('.edit-company').onclick=()=>editCompany(c);grid.appendChild(el)})
-}
-async function createCompany(){
-  const name=prompt('Nombre de la empresa:');if(!name?.trim())return;const address=prompt('Dirección de la empresa:')||'';
-  const ref=await addDoc(collection(db,'companies'),{name:name.trim(),address:address.trim(),createdAt:serverTimestamp(),createdBy:auth.currentUser.uid});
-  showToast('Empresa creada');await loadCompanies();const c=companiesCache.find(x=>x.id===ref.id);openCompany(c);
-}
-async function editCompany(c){const name=prompt('Nombre de la empresa:',c.name);if(!name?.trim())return;const address=prompt('Dirección:',c.address||'')||'';await updateDoc(doc(db,'companies',c.id),{name:name.trim(),address:address.trim()});showToast('Empresa actualizada');await loadCompanies()}
+async function loadCompanies(){companiesCache=(await listCollection('companies')).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'es'));renderCompanies()}
+function renderCompanies(){const grid=$('companyGrid');grid.innerHTML='';if(!companiesCache.length){grid.innerHTML='<div class="empty">Todavía no hay empresas. Creá la primera para comenzar.</div>';return}companiesCache.forEach(c=>{const el=document.createElement('div');el.className='company-card';el.innerHTML=`<h3>${escapeHtml(c.name)}</h3><small>${escapeHtml(c.address||'Sin dirección')}</small><div class="company-actions"><button class="primary open-company">Abrir</button><button class="mini edit-company">Editar</button></div>`;el.querySelector('.open-company').onclick=()=>openCompany(c);el.querySelector('.edit-company').onclick=()=>editCompany(c);grid.appendChild(el)})}
+async function createCompany(){const name=prompt('Nombre de la empresa:');if(!name?.trim())return;const address=prompt('Dirección de la empresa:')||'';const id=newId();await createDocument('companies',id,{name:name.trim(),address:address.trim(),createdAt:new Date().toISOString(),createdBy:session.localId});showToast('Empresa creada');await loadCompanies();openCompany(companiesCache.find(x=>x.id===id))}
+async function editCompany(c){const name=prompt('Nombre de la empresa:',c.name);if(!name?.trim())return;const address=prompt('Dirección:',c.address||'')||'';await updateDocument(`companies/${encodeURIComponent(c.id)}`,{name:name.trim(),address:address.trim(),updatedAt:new Date().toISOString()});showToast('Empresa actualizada');await loadCompanies()}
 function openCompany(c){currentCompany=c;$('recordsTitle').textContent=c.name;$('recordsSubtitle').textContent=c.address||'Sin dirección';show('recordsView');loadRecords()}
-async function loadRecords(){
-  if(!currentCompany)return;const snap=await getDocs(query(collection(db,'companies',currentCompany.id,'records'),orderBy('number','desc')));recordsCache=snap.docs.map(d=>({id:d.id,...d.data()}));renderRecords();
-}
+async function loadRecords(){if(!currentCompany)return;recordsCache=(await listCollection(`companies/${encodeURIComponent(currentCompany.id)}/records`)).sort((a,b)=>(parseInt(b.number)||0)-(parseInt(a.number)||0));renderRecords()}
 function renderRecords(){const q=$('recordSearch').value.toLowerCase().trim();const body=$('recordsBody');body.innerHTML='';const list=recordsCache.filter(r=>!q||String(r.number||'').includes(q)||(r.user||'').toLowerCase().includes(q)||(r.rep||'').toLowerCase().includes(q));if(!list.length){body.innerHTML='<tr><td colspan="5" class="empty">No hay registros.</td></tr>';return}list.forEach(r=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${escapeHtml(String(r.number||''))}</td><td>${escapeHtml(formatDate(r.date))}</td><td>${escapeHtml(r.user||'')}</td><td>${escapeHtml(r.rep||'')}</td><td class="actions"><button class="mini open">Ver</button> <button class="mini print">Imprimir</button></td>`;tr.querySelector('.open').onclick=()=>openRecord(r);tr.querySelector('.print').onclick=()=>{openRecord(r);setTimeout(()=>saveRecord(true),150)};body.appendChild(tr)})}
-function formatDate(v){if(!v)return'';const [y,m,d]=v.split('-');return `${d}/${m}/${y}`}
+function formatDate(v){if(!v)return'';const [y,m,d]=String(v).split('-');return d&&m&&y?`${d}/${m}/${y}`:String(v)}
 
-function buildTools(){const body=$('toolsBody');body.innerHTML='';for(let i=0;i<27;i++){body.appendChild(toolRow(i,'L'));body.appendChild(toolRow(i,'R'))}}
-function toolRow(i,side){return document.createElement('tr')}
-// Rebuild as two columns per row.
 function buildTools(){const body=$('toolsBody');body.innerHTML='';for(let i=0;i<27;i++){const tr=document.createElement('tr');tr.appendChild(toolDescCell(i,'L'));tr.appendChild(qtyCell(i,'L'));tr.appendChild(toolDescCell(i,'R'));tr.appendChild(qtyCell(i,'R'));body.appendChild(tr)}}
 function toolDescCell(i,side){const td=document.createElement('td');td.className='tool-cell';const b=document.createElement('button');b.className='tool-button';b.dataset.index=i;b.dataset.side=side;b.textContent='';b.onclick=e=>openPicker(e.currentTarget);td.appendChild(b);return td}
 function qtyCell(i,side){const td=document.createElement('td');const input=document.createElement('input');input.className='qty';input.type='number';input.min='0';input.dataset.qty=`${side}${i}`;input.value='';td.appendChild(input);return td}
 buildTools();
-
 function openPicker(btn){const picker=$('picker');picker.innerHTML='';picker.dataset.target=`${btn.dataset.side}${btn.dataset.index}`;picker.dataset.path='';renderPicker();const r=btn.getBoundingClientRect();picker.style.left=Math.min(window.innerWidth-330,Math.max(8,r.left))+'px';picker.style.top=Math.min(window.innerHeight-320,r.bottom+5)+'px';picker.classList.add('show')}
-function renderPicker(){const picker=$('picker');const path=picker.dataset.path?picker.dataset.path.split('|'):[];picker.innerHTML='';const head=document.createElement('div');head.className='picker-head';head.textContent=path.length?path.join(' / '):'Seleccionar herramienta';picker.appendChild(head);if(path.length){const back=document.createElement('button');back.className='back';back.textContent='← Volver';back.onclick=()=>{path.pop();picker.dataset.path=path.join('|');renderPicker()};picker.appendChild(back)}
- let obj=CATALOG;for(const p of path)obj=obj[p];if(Array.isArray(obj)){const search=document.createElement('input');search.className='search-tool';search.placeholder='Buscar herramienta...';picker.appendChild(search);const list=document.createElement('div');obj.forEach(item=>{const b=document.createElement('button');b.textContent=item;b.dataset.item=item;b.onclick=()=>selectTool(item);list.appendChild(b)});picker.appendChild(list);search.oninput=()=>{const term=search.value.toLowerCase();list.querySelectorAll('button').forEach(b=>b.style.display=b.dataset.item.toLowerCase().includes(term)?'block':'none')}}else{Object.keys(obj).forEach(k=>{const b=document.createElement('button');b.textContent=k;b.onclick=()=>{path.push(k);picker.dataset.path=path.join('|');renderPicker()};picker.appendChild(b)})}}
+function renderPicker(){const picker=$('picker');const path=picker.dataset.path?picker.dataset.path.split('|'):[];picker.innerHTML='';const head=document.createElement('div');head.className='picker-head';head.textContent=path.length?path.join(' / '):'Seleccionar herramienta';picker.appendChild(head);if(path.length){const back=document.createElement('button');back.className='back';back.textContent='← Volver';back.onclick=()=>{path.pop();picker.dataset.path=path.join('|');renderPicker()};picker.appendChild(back)}let obj=CATALOG;for(const p of path)obj=obj[p];if(Array.isArray(obj)){const search=document.createElement('input');search.className='search-tool';search.placeholder='Buscar herramienta...';picker.appendChild(search);const list=document.createElement('div');obj.forEach(item=>{const b=document.createElement('button');b.textContent=item;b.dataset.item=item;b.onclick=()=>selectTool(item);list.appendChild(b)});picker.appendChild(list);search.oninput=()=>{const term=search.value.toLowerCase();list.querySelectorAll('button').forEach(b=>b.style.display=b.dataset.item.toLowerCase().includes(term)?'block':'none')}}else Object.keys(obj).forEach(k=>{const b=document.createElement('button');b.textContent=k;b.onclick=()=>{path.push(k);picker.dataset.path=path.join('|');renderPicker()};picker.appendChild(b)})}
 function selectTool(item){const key=$('picker').dataset.target;const btn=document.querySelector(`.tool-button[data-side="${key[0]}"][data-index="${key.slice(1)}"]`);if(btn)btn.textContent=item;$('picker').classList.remove('show')}
 document.addEventListener('click',e=>{if(!$('picker').contains(e.target)&&!e.target.classList.contains('tool-button'))$('picker').classList.remove('show')});
 
-function clearForm(){
- $('fDate').value=today();$('fCompany').value=currentCompany?.name||'';$('fAddress').value=currentCompany?.address||'';$('fRep').value='';$('fDni').value='';$('fUser').value='';$('fObs').value='';$('fNumber').value=nextNumber();document.querySelectorAll('.tool-button').forEach(b=>b.textContent='');document.querySelectorAll('.qty').forEach(q=>q.value='');currentRecordId=null;
-}
+function clearForm(){$('fDate').value=today();$('fCompany').value=currentCompany?.name||'';$('fAddress').value=currentCompany?.address||'';$('fRep').value='';$('fDni').value='';$('fUser').value='';$('fObs').value='';$('fNumber').value=nextNumber();document.querySelectorAll('.tool-button').forEach(b=>b.textContent='');document.querySelectorAll('.qty').forEach(q=>q.value='');currentRecordId=null}
 function nextNumber(){if(!recordsCache.length)return '001';const max=Math.max(...recordsCache.map(r=>parseInt(r.number,10)||0));return String(max+1).padStart(3,'0')}
 async function startNewRecord(){if(!currentCompany){if(!companiesCache.length){showToast('Primero creá una empresa');return}openCompany(companiesCache[0])}await loadRecords();clearForm();show('formView')}
 function collectTools(){const arr=[];document.querySelectorAll('.tool-button').forEach(btn=>{if(btn.textContent.trim()){const key=btn.dataset.side+btn.dataset.index;const qty=document.querySelector(`.qty[data-qty="${key}"]`)?.value||'1';arr.push({side:btn.dataset.side,index:Number(btn.dataset.index),description:btn.textContent.trim(),quantity:Number(qty)||0})}});return arr}
 function fillTools(arr=[]){document.querySelectorAll('.tool-button').forEach(b=>b.textContent='');document.querySelectorAll('.qty').forEach(q=>q.value='');arr.forEach(t=>{const b=document.querySelector(`.tool-button[data-side="${t.side}"][data-index="${t.index}"]`);const q=document.querySelector(`.qty[data-qty="${t.side}${t.index}"]`);if(b)b.textContent=t.description;if(q)q.value=t.quantity||''})}
-function collectForm(){return {number:$('fNumber').value.trim(),date:$('fDate').value,company:currentCompany.id,companyName:currentCompany.name,address:$('fAddress').value.trim(),rep:$('fRep').value.trim(),dni:$('fDni').value.trim(),user:$('fUser').value.trim(),obs:$('fObs').value.trim(),tools:collectTools(),updatedAt:serverTimestamp(),updatedBy:auth.currentUser.uid}}
-async function saveRecord(printAfter){
- if(!currentCompany){showToast('No hay empresa seleccionada');return}
- const data=collectForm();if(!data.number){showToast('Falta el número de registro');return}
- let ref;if(currentRecordId){ref=doc(db,'companies',currentCompany.id,'records',currentRecordId);await setDoc(ref,data,{merge:true})}else{ref=await addDoc(collection(db,'companies',currentCompany.id,'records'),{...data,createdAt:serverTimestamp()});currentRecordId=ref.id}
- showToast(printAfter?'Registro guardado. Preparando impresión...':'Registro guardado correctamente');await loadRecords();if(printAfter)setTimeout(()=>window.print(),250)
-}
+function collectForm(){return {number:$('fNumber').value.trim(),date:$('fDate').value,company:currentCompany.id,companyName:currentCompany.name,address:$('fAddress').value.trim(),rep:$('fRep').value.trim(),dni:$('fDni').value.trim(),user:$('fUser').value.trim(),obs:$('fObs').value.trim(),tools:collectTools(),updatedAt:new Date().toISOString(),updatedBy:session.localId}}
+async function saveRecord(printAfter){if(!currentCompany){showToast('No hay empresa seleccionada');return}const data=collectForm();if(!data.number){showToast('Falta el número de registro');return}if(currentRecordId){await updateDocument(`companies/${encodeURIComponent(currentCompany.id)}/records/${encodeURIComponent(currentRecordId)}`,data)}else{currentRecordId=newId();await createDocument(`companies/${encodeURIComponent(currentCompany.id)}/records`,currentRecordId,{...data,createdAt:new Date().toISOString()})}showToast(printAfter?'Registro guardado. Preparando impresión...':'Registro guardado correctamente');await loadRecords();if(printAfter)setTimeout(()=>window.print(),250)}
 function openRecord(r){currentRecordId=r.id;$('fDate').value=r.date||'';$('fCompany').value=currentCompany.name;$('fAddress').value=r.address||currentCompany.address||'';$('fRep').value=r.rep||'';$('fDni').value=r.dni||'';$('fUser').value=r.user||'';$('fObs').value=r.obs||'';$('fNumber').value=r.number||'';fillTools(r.tools||[]);show('formView')}
 
-window.addEventListener('error',e=>{
-  console.error('Error JavaScript:',e.error||e.message);
-  const login=document.getElementById('loginError');
-  if(login && !login.textContent) login.textContent='Error al cargar la aplicación. Abrí F12 → Consola para ver el detalle.';
-});
+$('loginBtn').addEventListener('click',doLogin);$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin(e)});$('logoutBtn').onclick=()=>logout(true);$('navCompanies').onclick=async()=>{try{await loadCompanies();show('companiesView')}catch(e){showToast(e.message)}};$('navNew').onclick=()=>startNewRecord();$('newCompanyBtn').onclick=async()=>{try{await createCompany()}catch(e){console.error(e);showToast(e.message)}};$('backCompanies').onclick=()=>{show('companiesView');loadCompanies()};$('backRecords').onclick=()=>{show('recordsView');loadRecords()};$('newRecordBtn').onclick=()=>startNewRecord();$('newFormBtn').onclick=()=>startNewRecord();$('saveBtn').onclick=async()=>{try{await saveRecord(false)}catch(e){console.error(e);showToast('No se pudo guardar: '+e.message)}};$('printBtn').onclick=async()=>{try{await saveRecord(true)}catch(e){console.error(e);showToast('No se pudo guardar: '+e.message)}};$('recordSearch').oninput=renderRecords;
+
+(async()=>{if(session){if(await ensureSession()){await enterApp()}else logout(true)}else{ $('login').classList.remove('hidden'); $('app').classList.add('hidden'); }})();
 </script>
 </body>
 </html>
