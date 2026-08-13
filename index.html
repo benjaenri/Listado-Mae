@@ -24,7 +24,7 @@
     <p>Ingresá para administrar empresas y planillas.</p>
     <div class="field"><label>Correo</label><input id="loginEmail" type="email" autocomplete="username"></div>
     <div class="field"><label>Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
-    <button class="primary" id="loginBtn" style="width:100%">Ingresar</button>
+    <button type="button" class="primary" id="loginBtn" style="width:100%">Ingresar</button>
     <div class="login-error" id="loginError"></div>
   </div>
 </section>
@@ -77,9 +77,9 @@
 <div id="picker" class="picker"></div><div id="toast" class="toast hidden"></div>
 
 <script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
-import { getFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, query, orderBy, where, serverTimestamp, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
+import { getFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, query, orderBy, where, serverTimestamp, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
 
 // ============================================================
 // PEGÁ ACÁ EL firebaseConfig QUE TE DA FIREBASE > APP WEB
@@ -125,13 +125,64 @@ function show(view){['companiesView','recordsView','formView'].forEach(v=>$(v).c
 function escapeHtml(s=''){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 function today(){return new Date().toISOString().slice(0,10)}
 
+function showLoginError(message){
+  const box=$('loginError');
+  if(box) box.textContent=message;
+}
+
 onAuthStateChanged(auth, async user=>{
-  if(user){$('login').classList.add('hidden');$('app').classList.remove('hidden');$('currentUser').textContent=user.email||'';await loadCompanies();show('companiesView')}
-  else{$('app').classList.add('hidden');$('login').classList.remove('hidden')}
+  try{
+    if(user){
+      $('login').classList.add('hidden');
+      $('app').classList.remove('hidden');
+      $('currentUser').textContent=user.email||'';
+      await loadCompanies();
+      show('companiesView');
+    }else{
+      $('app').classList.add('hidden');
+      $('login').classList.remove('hidden');
+    }
+  }catch(e){
+    console.error('Error al cargar la aplicación:',e);
+    showLoginError('Sesión iniciada, pero hubo un error al cargar los datos. Revisá la consola.');
+  }
 });
 
-$('loginBtn').onclick=async()=>{try{$('loginError').textContent='';await signInWithEmailAndPassword(auth,$('loginEmail').value.trim(),$('loginPassword').value)}catch(e){$('loginError').textContent='No se pudo ingresar. Revisá correo y contraseña.'}};
-$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')$('loginBtn').click()});
+const loginBtn=$('loginBtn');
+if(loginBtn){
+  loginBtn.addEventListener('click', async (event)=>{
+    event.preventDefault();
+    const email=$('loginEmail').value.trim();
+    const password=$('loginPassword').value;
+    showLoginError('');
+    if(!email || !password){
+      showLoginError('Completá correo y contraseña.');
+      return;
+    }
+    loginBtn.disabled=true;
+    loginBtn.textContent='Ingresando...';
+    try{
+      await signInWithEmailAndPassword(auth,email,password);
+    }catch(e){
+      console.error('Firebase Authentication:',e);
+      const messages={
+        'auth/invalid-credential':'Correo o contraseña incorrectos.',
+        'auth/invalid-email':'El correo no tiene un formato válido.',
+        'auth/user-disabled':'Este usuario está deshabilitado.',
+        'auth/too-many-requests':'Demasiados intentos. Esperá unos minutos y probá nuevamente.',
+        'auth/unauthorized-domain':'Este dominio todavía no está autorizado en Firebase.',
+        'auth/network-request-failed':'No se pudo conectar con Firebase. Revisá tu conexión.',
+        'auth/operation-not-allowed':'El acceso por correo y contraseña no está habilitado en Firebase.'
+      };
+      showLoginError(messages[e.code] || `Error de Firebase: ${e.code||'desconocido'}`);
+    }finally{
+      loginBtn.disabled=false;
+      loginBtn.textContent='Ingresar';
+    }
+  });
+}
+
+$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')loginBtn?.click()});
 $('logoutBtn').onclick=()=>signOut(auth);
 $('navCompanies').onclick=async()=>{await loadCompanies();show('companiesView')};
 $('navNew').onclick=()=>startNewRecord();
@@ -194,6 +245,11 @@ async function saveRecord(printAfter){
 }
 function openRecord(r){currentRecordId=r.id;$('fDate').value=r.date||'';$('fCompany').value=currentCompany.name;$('fAddress').value=r.address||currentCompany.address||'';$('fRep').value=r.rep||'';$('fDni').value=r.dni||'';$('fUser').value=r.user||'';$('fObs').value=r.obs||'';$('fNumber').value=r.number||'';fillTools(r.tools||[]);show('formView')}
 
+window.addEventListener('error',e=>{
+  console.error('Error JavaScript:',e.error||e.message);
+  const login=document.getElementById('loginError');
+  if(login && !login.textContent) login.textContent='Error al cargar la aplicación. Abrí F12 → Consola para ver el detalle.';
+});
 </script>
 </body>
 </html>
