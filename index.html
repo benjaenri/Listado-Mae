@@ -26,7 +26,7 @@
     <p>Ingresá para administrar empresas y planillas.</p>
     <div class="field"><label>Correo</label><input id="loginEmail" type="email" autocomplete="username"></div>
     <div class="field"><label>Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
-    <button class="primary" id="loginBtn" style="width:100%">Ingresar</button>
+    <button class="primary" id="loginBtn" type="button" onclick="window.loginMAE()" style="width:100%">Ingresar</button>
     <div class="login-error" id="loginError"></div>
   </div>
 </section>
@@ -86,9 +86,11 @@
 (function(){
 'use strict';
 const firebaseConfig={apiKey:"AIzaSyBwV5SHupEMnInaSOs7lVcQHpHeOQtnNNA",authDomain:"listado-de-herramientas.firebaseapp.com",projectId:"listado-de-herramientas",storageBucket:"listado-de-herramientas.firebasestorage.app",messagingSenderId:"256830439088",appId:"1:256830439088:web:c92cd54cb7081e76488575",measurementId:"G-L3E04SEMRP"};
-if(!window.firebase){document.getElementById('loginError').textContent='No se pudo cargar Firebase. Recargá la página.';return;}
+if(!window.firebase){document.getElementById('loginError').textContent='No se pudo cargar Firebase. Verificá la conexión y recargá la página.'; throw new Error('Firebase SDK no cargado');}
 if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(),db=firebase.firestore();
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+window.__maeFirebaseReady=true;
 const $=id=>document.getElementById(id);
 let currentCompany=null,currentRecordId=null,companiesCache=[],recordsCache=[];
 const CATALOG={"MAQUINAS":{"TALADROS":["Taladro inalámbrico Ingco 20v + caja","Taladro inalámbrico"],"ROTOPERCUTOR":["Rotopercutor"],"AMOLADORAS":["Amoladora DeWalt con 2 bat y cargador","Amoladora"]},"HERRAMIENTAS DE MANO":{"DE CORTE Y FUERZA":["Pico de loro","Masa albañil","Llave francesa","Mecha escalonada","Punta copa","Punta phillips","Prolongador de punta","Cuter","Tijera corta cables","Crimpeadora","Alicate pre aislado","Pinza universal pre aislada","Escuadra metalica","Llaves fijas"],"ELECTRICA":["Destornilladores","Pinza amperometrica","Cargador de baterías Ingco","Baterías Ingco 20v"],"NIVELES":["Nivel laser gladiator en caja","Medidor laser con estuche","Nivel de mano"]},"MOVILIDAD":{"EQUIPOS Y ACCESORIOS":["Tablero de obra con alargue","Matafuegos","Mascara facial","Manta ignifuga","Arnes","Baul de herramientas negro","Fibron","Cinta métrica"]}};
@@ -99,7 +101,7 @@ function today(){const d=new Date();const m=String(d.getMonth()+1).padStart(2,'0
 function formatDate(v){if(!v)return'';const a=String(v).split('-');return a.length===3?`${a[2]}/${a[1]}/${a[0]}`:v}
 function setBusy(btn,busy,text){if(!btn)return;btn.disabled=busy;btn.dataset.oldText=btn.dataset.oldText||btn.textContent;if(busy)btn.textContent=text;else btn.textContent=btn.dataset.oldText;}
 
-async function doLogin(){
+window.loginMAE = async function(){
  const email=$('loginEmail').value.trim(),pass=$('loginPassword').value;
  $('loginError').textContent='';
  if(!email||!pass){$('loginError').textContent='Ingresá el correo y la contraseña.';return;}
@@ -150,5 +152,3 @@ function collectTools(){const arr=[];document.querySelectorAll('.tool-button').f
 function fillTools(arr){document.querySelectorAll('.tool-button').forEach(b=>b.textContent='');document.querySelectorAll('.qty').forEach(q=>q.value='');(arr||[]).forEach(t=>{const b=document.querySelector(`.tool-button[data-side="${t.side}"][data-index="${t.index}"]`),q=document.querySelector(`.qty[data-qty="${t.side}${t.index}"]`);if(b)b.textContent=t.description;if(q)q.value=t.quantity||''})}
 function collectForm(){return{number:$('fNumber').value.trim(),date:$('fDate').value,company:currentCompany.id,companyName:currentCompany.name,address:$('fAddress').value.trim(),rep:$('fRep').value.trim(),dni:$('fDni').value.trim(),user:$('fUser').value.trim(),obs:$('fObs').value.trim(),tools:collectTools(),updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:auth.currentUser.uid}}
 async function saveRecord(printAfter){if(!currentCompany){toast('No hay empresa seleccionada');return}const data=collectForm();if(!data.number){toast('Falta el número de registro');return}const btn=printAfter?$('printBtn'):$('saveBtn');setBusy(btn,true,printAfter?'Guardando...':'Guardando...');try{let ref;if(currentRecordId){ref=db.collection('companies').doc(currentCompany.id).collection('records').doc(currentRecordId);await ref.set(data,{merge:true})}else{ref=await db.collection('companies').doc(currentCompany.id).collection('records').add({...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()});currentRecordId=ref.id}await loadRecords();toast(printAfter?'Registro guardado. Preparando impresión...':'Registro guardado correctamente');if(printAfter)window.setTimeout(()=>window.print(),300)}catch(e){console.error(e);toast('No se pudo guardar: '+e.code)}finally{setBusy(btn,false)}}
-function openRecord(r){currentRecordId=r.id;$('fDate').value=r.date||today();$('fCompany').value=currentCompany.name;$('fAddress').value=r.address||currentCompany.address||'';$('fRep').value=r.rep||'';$('fDni').value=r.dni||'';$('fUser').value=r.user||'';$('fObs').value=r.obs||'';$('fNumber').value=r.number||'';fillTools(r.tools||[]);show('formView');window.scrollTo({top:0,behavior:'smooth'})}
-
