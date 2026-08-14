@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Registro de Seguridad Corporativa | MAE</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#eef2f4;color:#111}button,input,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+:root{--teal:#009caf}
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}.login-card{width:390px;background:#fff;border-radius:16px;padding:28px;box-shadow:0 12px 40px #0002}.login-card img{display:block;margin:0 auto 18px;max-width:145px;max-height:90px}.login-card h1{font-size:22px;margin:0 0 6px;text-align:center}.login-card p{font-size:13px;color:#666;text-align:center;margin:0 0 22px}.field{margin-bottom:12px}.field label{display:block;font-size:12px;font-weight:700;margin-bottom:5px}.field input,.field textarea{width:100%;border:1px solid #bbb;border-radius:7px;padding:8px 9px;background:#fff}.field textarea{min-height:58px;resize:vertical}.primary{background:var(--teal);color:#fff;border:0;border-radius:7px;padding:10px 16px;font-weight:700}.secondary{background:#e9eef0;border:0;border-radius:7px;padding:10px 16px;font-weight:700}.mini{border:0;background:#e9eef0;border-radius:6px;padding:7px 9px;font-weight:700}.login-error{color:#b3261e;font-size:13px;margin-top:10px;min-height:16px}
+#app{min-height:100vh}.topbar{height:70px;background:#fff;border-bottom:1px solid #d9dfe1;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:20}.brand{display:flex;align-items:center;gap:12px}.brand img{width:52px;height:44px;object-fit:contain}.brand strong{font-size:20px}.userbar{display:flex;align-items:center;gap:12px;font-size:13px;color:#555}.layout{display:flex;min-height:calc(100vh - 70px)}.sidebar{width:255px;background:#fff;border-right:1px solid #d9dfe1;padding:18px}.sidebar h2{font-size:14px;margin:0 0 12px}.side-btn{width:100%;text-align:left;border:0;background:#f1f4f5;padding:10px;border-radius:8px;margin-bottom:7px;font-weight:700}.side-btn.active{background:#dff5f7;color:#007f8d}.content{flex:1;padding:25px;overflow:auto}.page-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.page-title h1{margin:0;font-size:25px}.page-title p{margin:5px 0 0;color:#6b7478;font-size:13px}.card{background:#fff;border-radius:12px;border:1px solid #dce2e4;box-shadow:0 3px 15px #0000000a;padding:18px;margin-bottom:18px}.company-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.company-card{border:1px solid #d9dfe1;border-radius:10px;padding:15px;background:#fff}.company-card h3{margin:0 0 6px;font-size:17px}.company-card small{color:#697276}.company-actions{display:flex;gap:7px;margin-top:12px}.toolbar{display:flex;gap:8px;flex-wrap:wrap}.search{border:1px solid #bbb;border-radius:7px;padding:9px;min-width:220px}.table-wrap{overflow:auto}.records{width:100%;border-collapse:collapse}.records th,.records td{border-bottom:1px solid #e0e4e5;padding:9px;text-align:left;font-size:13px}.records th{background:#f5f7f7}.records .actions{white-space:nowrap}.mini.print{background:#111;color:#fff}.empty{padding:35px;text-align:center;color:#737b7e}
+/* Hoja A4 */
+.form-actions{display:flex;justify-content:space-between;gap:10px;margin-bottom:12px}.form-actions .right{display:flex;gap:7px}.sheet{width:210mm;height:297mm;background:#fff;margin:0 auto;padding:6mm;box-shadow:0 5px 25px #0002;overflow:hidden}.header-grid{height:22mm;display:grid;grid-template-columns:44mm 74mm 1fr;border:1px solid #222;overflow:hidden}.logo-box{background:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;display:flex;align-items:center;justify-content:center;border-right:1px solid #222;overflow:hidden}.logo-box img{display:block;width:35mm;height:19mm;object-fit:contain}.center-head{display:grid;grid-template-rows:6.5mm 9.5mm 5.5mm;text-align:center;border-right:1px solid #222}.center-head>div{border-bottom:1px solid #222;display:flex;align-items:center;justify-content:center}.center-head>div:last-child{border-bottom:0}.head-title{font-size:8.6pt}.head-main{font-size:9.7pt;font-weight:700;line-height:1.03}.head-code{font-size:8.3pt}.right-head{display:grid;grid-template-columns:28mm 1fr;min-width:0}.datebox{display:grid;grid-template-rows:1fr 1fr;border-right:1px solid #222}.datebox .row{display:flex;align-items:center;justify-content:center;gap:1.5px;font-size:8pt;border-bottom:1px solid #222;white-space:nowrap}.datebox .row:last-child{border-bottom:0}.datebox input{border:0;border-bottom:1px dotted #333;width:17mm;font-size:8pt;background:transparent}.datebox .row:last-child input{width:11mm;text-align:center}.es-box{display:flex;align-items:center;justify-content:center;overflow:hidden}.es-box img{display:block;width:36mm;height:16mm;object-fit:contain}
+.info-table{width:100%;border-collapse:collapse;margin-top:1.5mm;font-size:8pt}.info-table td{border:1px solid #777;height:5.5mm;padding:.6mm 1mm;white-space:nowrap}.info-table td:nth-child(1){width:35%}.info-table td:nth-child(2){width:28%}.info-table td:nth-child(3){width:37%}.info-table input,.info-table textarea{border:0;outline:0;width:calc(100% - 5px);font-size:8pt;background:transparent;padding:0}.info-table textarea{height:4mm;resize:none;vertical-align:middle}
+.tools-table{width:100%;border-collapse:collapse;margin-top:2mm;font-size:8pt;table-layout:fixed}.tools-table th,.tools-table td{border:1px solid #777;height:5.4mm;padding:0 1mm}.tools-table th{font-size:8.4pt;text-align:center;background:#fafafa;height:5.5mm}.tools-table th:nth-child(1),.tools-table th:nth-child(3){width:39%}.tools-table th:nth-child(2),.tools-table th:nth-child(4){width:6%}.tool-cell{position:relative;padding:0!important}.tool-button{height:100%;width:100%;border:0;background:#fff;text-align:left;padding:0 1mm;font-size:8pt;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.qty{width:100%;height:100%;border:0;text-align:center;font-size:8pt;padding:0;background:#fff}.signatures{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3mm;margin-top:2mm}.signature{height:21mm;border:1px solid #777;position:relative;text-align:center;padding-top:1.5mm;font-size:8pt}.signature .line{position:absolute;left:12mm;right:12mm;bottom:6mm;border-bottom:1px dotted #222}.signature strong{position:absolute;left:0;right:0;bottom:2mm;font-size:7.5pt}.picker{position:fixed;z-index:100;display:none;background:#fff;border:1px solid #bbb;border-radius:8px;box-shadow:0 10px 35px #0003;min-width:245px;max-width:320px;overflow:hidden}.picker.show{display:block}.picker-head{padding:9px 11px;background:#f2f5f5;font-size:12px;font-weight:700}.picker button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:9px 11px;font-size:12px}.picker button:hover{background:#e8f6f7}.picker .back{font-weight:700;background:#fafafa;border-bottom:1px solid #eee}.picker .search-tool{margin:8px;width:calc(100% - 16px);border:1px solid #bbb;border-radius:6px;padding:7px}.toast{position:fixed;right:20px;bottom:20px;background:#111;color:#fff;border-radius:8px;padding:11px 15px;z-index:200;font-size:13px;box-shadow:0 6px 20px #0003}
+@media(max-width:1100px){.sidebar{width:205px}.content{padding:15px}.sheet-wrap{width:100%;max-width:100%;overflow:hidden;padding-bottom:12px;position:relative}.sheet{transform-origin:top left;margin:0}.picker{max-width:min(320px,calc(100vw - 16px));min-width:220px;max-height:70vh;overflow:hidden}.picker .picker-list{max-height:52vh;overflow-y:auto;-webkit-overflow-scrolling:touch}}@media(max-width:760px){.sidebar{display:none}.topbar{padding:0 12px;height:60px}.brand{min-width:0}.brand img{width:42px;height:38px}.brand strong{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.userbar{font-size:11px;gap:6px;flex-shrink:0}.userbar .secondary{padding:7px 9px}.content{padding:10px;min-width:0}.sheet-wrap{width:100%;max-width:100%;overflow:hidden;padding-bottom:16px}.sheet{margin:0;transform-origin:top left}.picker{max-width:calc(100vw - 16px);min-width:230px}.picker button{padding:9px 11px;font-size:12px}.picker .picker-list{max-height:50vh;overflow-y:auto}}
+@media print{html,body{background:#fff!important}.topbar,.sidebar,.form-actions,.no-print,.picker,.toast{display:none!important}.layout,.content{display:block!important;padding:0!important;margin:0!important;min-height:0!important;overflow:visible!important}.sheet-wrap{overflow:visible!important}.sheet{box-shadow:none!important;margin:0!important;width:210mm!important;height:297mm!important;min-height:0!important;padding:6mm!important;overflow:hidden!important;transform:none!important}.logo-box{background:#000!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.info-table input,.info-table textarea,.tool-button,.qty{color:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.tools-table{break-inside:avoid;page-break-inside:avoid}.signatures{break-inside:avoid;page-break-inside:avoid}@page{size:A4 portrait;margin:0}}
+
+</style>
+</head>
+<body>
+<section id="login">
+  <div class="login-card">
+    <img src="assets/logo-mae.png" alt="MAE">
+    <h1>Registro de Seguridad</h1>
+    <p>Ingresá para administrar empresas y planillas.</p>
+    <div class="field"><label>Correo</label><input id="loginEmail" type="email" autocomplete="username"></div>
+    <div class="field"><label>Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
+    <button class="primary" id="loginBtn" style="width:100%">Ingresar</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</section>
+
+<section id="app" class="hidden">
+  <header class="topbar">
+    <div class="brand"><img src="assets/logo-mae.png"><strong>Registro de Seguridad Corporativa</strong></div>
+    <div class="userbar"><span id="currentUser"></span><button class="secondary" id="logoutBtn">Cerrar sesión</button></div>
+  </header>
+  <div class="layout">
+    <aside class="sidebar">
+      <h2>GESTIÓN</h2>
+      <button class="side-btn active" id="navCompanies">🏢 Empresas</button>
+      <button class="side-btn" id="navNew">＋ Nueva planilla</button>
+    </aside>
+    <main class="content">
+      <div id="companiesView">
+        <div class="page-title"><div><h1>Empresas</h1><p>Cada empresa funciona como una carpeta de registros.</p></div><button class="primary" id="newCompanyBtn">+ Nueva empresa</button></div>
+        <div class="card"><div class="company-grid" id="companyGrid"></div></div>
+      </div>
+      <div id="recordsView" class="hidden">
+        <div class="page-title"><div><h1 id="recordsTitle">Empresa</h1><p id="recordsSubtitle"></p></div><button class="primary" id="newRecordBtn">+ Nueva planilla</button></div>
+        <div class="card"><div class="toolbar"><input class="search" id="recordSearch" placeholder="Buscar por Nº, usuario o representante..."><button class="secondary" id="backCompanies">← Empresas</button></div></div>
+        <div class="card"><div class="table-wrap"><table class="records"><thead><tr><th>Nº</th><th>Fecha</th><th>Usuario Bridgestone</th><th>Representante</th><th>Acciones</th></tr></thead><tbody id="recordsBody"></tbody></table></div></div>
+      </div>
+      <div id="formView" class="hidden">
+        <div class="form-actions no-print"><button class="secondary" id="backRecords">← Volver</button><div class="right"><button class="secondary" id="newFormBtn">Nuevo</button><button class="primary" id="saveBtn">Guardar</button><button style="background:#111;color:#fff;border:0;border-radius:7px;padding:10px 16px;font-weight:700" id="printBtn">Imprimir</button></div></div>
+        <div class="sheet-wrap">
+          <section class="sheet" id="sheet">
+            <div class="header-grid">
+              <div class="logo-box"><img src="assets/logo-mae.png" alt="MAE"></div>
+              <div class="center-head"><div class="head-title">REGISTRO DE SEGURIDAD CORPORATIVA</div><div class="head-main">DECLARACION DE INGRESO DE<br>MAQUINAS – HERRAMIENTAS Y EQUIPOS</div><div class="head-code">RSEC – 10 - 002</div></div>
+              <div class="right-head">
+                <div class="datebox"><div class="row">Fecha: <input id="fDate" type="date"></div><div class="row">N° <input id="fNumber"></div></div>
+                <div class="es-box"><img src="assets/logo-es.png" alt="Electricidad Serrano"></div>
+              </div>
+            </div>
+            <table class="info-table">
+              <tr><td colspan="1">Empresa: <input id="fCompany" readonly></td><td colspan="2">Dirección: <input id="fAddress"></td></tr>
+              <tr><td colspan="2">Representante (Nombre y apellido): <input id="fRep"></td><td>D.N.I./C.I./L.E.: <input id="fDni"></td></tr>
+              <tr><td>Usuario Bridgestone: <input id="fUser"></td><td colspan="2">Observaciones: <textarea id="fObs"></textarea></td></tr>
+            </table>
+            <table class="tools-table"><thead><tr><th>Descripción</th><th>Cant.</th><th>Descripción</th><th>Cant.</th></tr></thead><tbody id="toolsBody"></tbody></table>
+            <div class="signatures"><div class="signature">CONTROL DE INGRESO<div class="line"></div><strong>NOMBRE Y FIRMA</strong></div><div class="signature">CONTROL DE EGRESO<div class="line"></div><strong>NOMBRE Y FIRMA</strong></div><div class="signature">FIRMA<div class="line"></div><strong>NOMBRE Y FIRMA</strong></div></div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+<div id="picker" class="picker"></div><div id="toast" class="toast hidden"></div>
+
+<script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+'use strict';
+const firebaseConfig={apiKey:"AIzaSyBwV5SHupEMnInaSOs7lVcQHpHeOQtnNNA",authDomain:"listado-de-herramientas.firebaseapp.com",projectId:"listado-de-herramientas",storageBucket:"listado-de-herramientas.firebasestorage.app",messagingSenderId:"256830439088",appId:"1:256830439088:web:c92cd54cb7081e76488575",measurementId:"G-L3E04SEMRP"};
+if(!window.firebase){document.getElementById('loginError').textContent='No se pudo cargar Firebase. Recargá la página.';return;}
+if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.firestore();
+const $=id=>document.getElementById(id);
+let currentCompany=null,currentRecordId=null,companiesCache=[],recordsCache=[];
+const CATALOG={"MAQUINAS":{"TALADROS":["Taladro inalámbrico Ingco 20v + caja","Taladro inalámbrico"],"ROTOPERCUTOR":["Rotopercutor"],"AMOLADORAS":["Amoladora DeWalt con 2 bat y cargador","Amoladora"]},"HERRAMIENTAS DE MANO":{"DE CORTE Y FUERZA":["Pico de loro","Masa albañil","Llave francesa","Mecha escalonada","Punta copa","Punta phillips","Prolongador de punta","Cuter","Tijera corta cables","Crimpeadora","Alicate pre aislado","Pinza universal pre aislada","Escuadra metalica","Llaves fijas"],"ELECTRICA":["Destornilladores","Pinza amperometrica","Cargador de baterías Ingco","Baterías Ingco 20v"],"NIVELES":["Nivel laser gladiator en caja","Medidor laser con estuche","Nivel de mano"]},"MOVILIDAD":{"EQUIPOS Y ACCESORIOS":["Tablero de obra con alargue","Matafuegos","Mascara facial","Manta ignifuga","Arnes","Baul de herramientas negro","Fibron","Cinta métrica"]}};
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.remove('hidden');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.add('hidden'),2600)}
+function show(view){['companiesView','recordsView','formView'].forEach(v=>$(v).classList.add('hidden'));$(view).classList.remove('hidden');if(view==='formView'){requestAnimationFrame(()=>{resizeSheet();setTimeout(resizeSheet,80)})}}
+function escapeHtml(s){return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function today(){const d=new Date();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return `${d.getFullYear()}-${m}-${day}`}
+function formatDate(v){if(!v)return'';const a=String(v).split('-');return a.length===3?`${a[2]}/${a[1]}/${a[0]}`:v}
+function setBusy(btn,busy,text){if(!btn)return;btn.disabled=busy;btn.dataset.oldText=btn.dataset.oldText||btn.textContent;if(busy)btn.textContent=text;else btn.textContent=btn.dataset.oldText;}
+
+async function doLogin(){
+ const email=$('loginEmail').value.trim(),pass=$('loginPassword').value;
+ $('loginError').textContent='';
+ if(!email||!pass){$('loginError').textContent='Ingresá el correo y la contraseña.';return;}
+ const btn=$('loginBtn');setBusy(btn,true,'Ingresando...');
+ try{await auth.signInWithEmailAndPassword(email,pass);}
+ catch(e){console.error(e);const map={'auth/invalid-credential':'Correo o contraseña incorrectos.','auth/invalid-email':'El correo no es válido.','auth/user-not-found':'No existe un usuario con ese correo.','auth/wrong-password':'La contraseña es incorrecta.','auth/too-many-requests':'Demasiados intentos. Esperá unos minutos.','auth/unauthorized-domain':'Firebase no autoriza este dominio. Agregá benjaenri.github.io en Authentication > Configuración > Dominios autorizados.'};$('loginError').textContent=map[e.code]||('Error de Firebase: '+e.code);}
+ finally{setBusy(btn,false);}
+}
+
+async function loadCompanies(){
+ try{const snap=await db.collection('companies').orderBy('name').get();companiesCache=snap.docs.map(d=>({id:d.id,...d.data()}));renderCompanies();}
+ catch(e){console.error(e);toast('No se pudieron cargar las empresas: '+e.code)}
+}
+function renderCompanies(){const grid=$('companyGrid');grid.innerHTML='';if(!companiesCache.length){grid.innerHTML='<div class="empty">Todavía no hay empresas. Creá la primera para comenzar.</div>';return}companiesCache.forEach(c=>{const el=document.createElement('div');el.className='company-card';el.innerHTML=`<h3>${escapeHtml(c.name)}</h3><small>${escapeHtml(c.address||'Sin dirección')}</small><div class="company-actions"><button type="button" class="primary open-company">Abrir</button><button type="button" class="mini edit-company">Editar</button></div>`;el.querySelector('.open-company').onclick=()=>openCompany(c);el.querySelector('.edit-company').onclick=()=>editCompany(c);grid.appendChild(el)})}
+async function createCompany(){const name=prompt('Nombre de la empresa:');if(!name||!name.trim())return;const address=prompt('Dirección de la empresa:')||'';try{const ref=await db.collection('companies').add({name:name.trim(),address:address.trim(),createdAt:firebase.firestore.FieldValue.serverTimestamp(),createdBy:auth.currentUser.uid});await loadCompanies();const c=companiesCache.find(x=>x.id===ref.id);openCompany(c);toast('Empresa creada');}catch(e){console.error(e);toast('No se pudo crear la empresa: '+e.code)}}
+async function editCompany(c){const name=prompt('Nombre de la empresa:',c.name);if(!name||!name.trim())return;const address=prompt('Dirección:',c.address||'')||'';try{await db.collection('companies').doc(c.id).update({name:name.trim(),address:address.trim()});await loadCompanies();toast('Empresa actualizada');}catch(e){console.error(e);toast('No se pudo actualizar: '+e.code)}}
+function openCompany(c){currentCompany=c;$('recordsTitle').textContent=c.name;$('recordsSubtitle').textContent=c.address||'Sin dirección';show('recordsView');loadRecords()}
+async function loadRecords(){if(!currentCompany)return;try{const snap=await db.collection('companies').doc(currentCompany.id).collection('records').get();recordsCache=snap.docs.map(d=>({id:d.id,...d.data()}));recordsCache.sort((a,b)=>(parseInt(b.number,10)||0)-(parseInt(a.number,10)||0));renderRecords();}catch(e){console.error(e);toast('No se pudieron cargar los registros: '+e.code)}}
+function renderRecords(){const q=$('recordSearch').value.toLowerCase().trim(),body=$('recordsBody');body.innerHTML='';const list=recordsCache.filter(r=>!q||String(r.number||'').includes(q)||(r.user||'').toLowerCase().includes(q)||(r.rep||'').toLowerCase().includes(q));if(!list.length){body.innerHTML='<tr><td colspan="5" class="empty">No hay registros.</td></tr>';return}list.forEach(r=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${escapeHtml(r.number)}</td><td>${escapeHtml(formatDate(r.date))}</td><td>${escapeHtml(r.user)}</td><td>${escapeHtml(r.rep)}</td><td class="actions"><button type="button" class="mini open">Ver</button> <button type="button" class="mini print">Imprimir</button> <button type="button" class="mini delete-record" style="background:#b3261e;color:#fff">Eliminar</button></td>`;tr.querySelector('.open').onclick=()=>openRecord(r);tr.querySelector('.print').onclick=async()=>{openRecord(r);await new Promise(res=>setTimeout(res,80));await saveRecord(true)};tr.querySelector('.delete-record').onclick=()=>deleteRecord(r);body.appendChild(tr)})}
+
+async function deleteRecord(r){
+  if(!currentCompany || !r || !r.id) return;
+  const ok=window.confirm(`¿Seguro que querés eliminar la planilla Nº ${r.number||''}?\n\nEsta acción no se puede deshacer.`);
+  if(!ok) return;
+  try{
+    await db.collection('companies').doc(currentCompany.id).collection('records').doc(r.id).delete();
+    if(currentRecordId===r.id) currentRecordId=null;
+    await loadRecords();
+    toast('Planilla eliminada correctamente');
+  }catch(e){
+    console.error(e);
+    toast('No se pudo eliminar la planilla: '+(e.code||e.message));
+  }
+}
+
+function buildTools(){const body=$('toolsBody');body.innerHTML='';for(let i=0;i<35;i++){const tr=document.createElement('tr');tr.append(toolDescCell(i,'L'),qtyCell(i,'L'),toolDescCell(i,'R'),qtyCell(i,'R'));body.appendChild(tr)}}
+function toolDescCell(i,side){const td=document.createElement('td');td.className='tool-cell';const b=document.createElement('button');b.type='button';b.className='tool-button';b.dataset.index=i;b.dataset.side=side;b.onclick=()=>openPicker(b);td.appendChild(b);return td}
+function qtyCell(i,side){const td=document.createElement('td');const input=document.createElement('input');input.className='qty';input.type='number';input.min='0';input.step='1';input.dataset.qty=`${side}${i}`;td.appendChild(input);return td}
+function openPicker(btn){const picker=$('picker');picker.innerHTML='';picker.dataset.target=btn.dataset.side+btn.dataset.index;picker.dataset.path='';renderPicker();const r=btn.getBoundingClientRect();picker.style.left=Math.min(window.innerWidth-330,Math.max(8,r.left))+'px';picker.style.top=Math.min(window.innerHeight-320,r.bottom+5)+'px';picker.classList.add('show')}
+function renderPicker(){const picker=$('picker'),path=picker.dataset.path?picker.dataset.path.split('|'):[];picker.innerHTML='';const h=document.createElement('div');h.className='picker-head';h.textContent=path.length?path.join(' / '):'Seleccionar herramienta';picker.appendChild(h);if(path.length){const back=document.createElement('button');back.type='button';back.className='back';back.textContent='← Volver';back.onclick=()=>{path.pop();picker.dataset.path=path.join('|');renderPicker()};picker.appendChild(back)}let obj=CATALOG;path.forEach(p=>obj=obj[p]);if(Array.isArray(obj)){const search=document.createElement('input');search.className='search-tool';search.placeholder='Buscar herramienta...';picker.appendChild(search);const list=document.createElement('div');list.className='picker-list';obj.forEach(item=>{const b=document.createElement('button');b.type='button';b.textContent=item;b.dataset.item=item;b.onclick=()=>selectTool(item);list.appendChild(b)});picker.appendChild(list);search.oninput=()=>{const term=search.value.toLowerCase();list.querySelectorAll('button').forEach(b=>b.style.display=b.dataset.item.toLowerCase().includes(term)?'block':'none')}}else Object.keys(obj).forEach(k=>{const b=document.createElement('button');b.type='button';b.textContent=k;b.onclick=()=>{path.push(k);picker.dataset.path=path.join('|');renderPicker()};picker.appendChild(b)})}
+function selectTool(item){const picker=$('picker'),key=picker.dataset.target,side=key[0],index=key.slice(1),btn=document.querySelector(`.tool-button[data-side="${side}"][data-index="${index}"]`);if(btn)btn.textContent=item;picker.classList.remove('show')}
+document.addEventListener('click',e=>{const p=$('picker');if(p&&!p.contains(e.target)&&!e.target.classList.contains('tool-button'))p.classList.remove('show')});
+
+function nextNumber(){if(!recordsCache.length)return'001';const max=Math.max(...recordsCache.map(r=>parseInt(r.number,10)||0));return String(max+1).padStart(3,'0')}
+function clearForm(){currentRecordId=null;$('fDate').value=today();$('fCompany').value=currentCompany?currentCompany.name:'';$('fAddress').value=currentCompany?currentCompany.address:'';$('fRep').value='';$('fDni').value='';$('fUser').value='';$('fObs').value='';$('fNumber').value=nextNumber();document.querySelectorAll('.tool-button').forEach(b=>b.textContent='');document.querySelectorAll('.qty').forEach(q=>q.value='')}
+async function startNewRecord(){if(!currentCompany){toast('Primero seleccioná una empresa.');show('companiesView');return}await loadRecords();clearForm();show('formView');window.scrollTo({top:0,behavior:'smooth'})}
+function collectTools(){const arr=[];document.querySelectorAll('.tool-button').forEach(btn=>{const d=btn.textContent.trim();if(!d)return;const key=btn.dataset.side+btn.dataset.index;const q=document.querySelector(`.qty[data-qty="${key}"]`);arr.push({side:btn.dataset.side,index:Number(btn.dataset.index),description:d,quantity:Number(q&&q.value)||1})});return arr}
+function fillTools(arr){document.querySelectorAll('.tool-button').forEach(b=>b.textContent='');document.querySelectorAll('.qty').forEach(q=>q.value='');(arr||[]).forEach(t=>{const b=document.querySelector(`.tool-button[data-side="${t.side}"][data-index="${t.index}"]`),q=document.querySelector(`.qty[data-qty="${t.side}${t.index}"]`);if(b)b.textContent=t.description;if(q)q.value=t.quantity||''})}
+function collectForm(){return{number:$('fNumber').value.trim(),date:$('fDate').value,company:currentCompany.id,companyName:currentCompany.name,address:$('fAddress').value.trim(),rep:$('fRep').value.trim(),dni:$('fDni').value.trim(),user:$('fUser').value.trim(),obs:$('fObs').value.trim(),tools:collectTools(),updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:auth.currentUser.uid}}
+async function saveRecord(printAfter){if(!currentCompany){toast('No hay empresa seleccionada');return}const data=collectForm();if(!data.number){toast('Falta el número de registro');return}const btn=printAfter?$('printBtn'):$('saveBtn');setBusy(btn,true,printAfter?'Guardando...':'Guardando...');try{let ref;if(currentRecordId){ref=db.collection('companies').doc(currentCompany.id).collection('records').doc(currentRecordId);await ref.set(data,{merge:true})}else{ref=await db.collection('companies').doc(currentCompany.id).collection('records').add({...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()});currentRecordId=ref.id}await loadRecords();toast(printAfter?'Registro guardado. Preparando impresión...':'Registro guardado correctamente');if(printAfter)window.setTimeout(()=>window.print(),300)}catch(e){console.error(e);toast('No se pudo guardar: '+e.code)}finally{setBusy(btn,false)}}
+function openRecord(r){currentRecordId=r.id;$('fDate').value=r.date||today();$('fCompany').value=currentCompany.name;$('fAddress').value=r.address||currentCompany.address||'';$('fRep').value=r.rep||'';$('fDni').value=r.dni||'';$('fUser').value=r.user||'';$('fObs').value=r.obs||'';$('fNumber').value=r.number||'';fillTools(r.tools||[]);show('formView');window.scrollTo({top:0,behavior:'smooth'})}
+
+function resizeSheet(){
+  const wrap=document.querySelector('.sheet-wrap'), sheet=document.getElementById('sheet');
+  if(!wrap||!sheet||window.matchMedia('print').matches||$('formView').classList.contains('hidden')) return;
+  // El ancho real de la hoja A4 en CSS px. No usamos un valor fijo para que funcione
+  // también si el navegador cambia el zoom o la densidad de píxeles.
+  const sheetWidth=sheet.offsetWidth || 794;
+  const sheetHeight=sheet.offsetHeight || 1123;
+  const available=Math.max(280, wrap.clientWidth-4);
+  const scale=Math.min(1, available/sheetWidth);
+  sheet.style.transform=`scale(${scale})`;
+  sheet.style.transformOrigin='top left';
+  wrap.style.height=(sheetHeight*scale+16)+'px';
+  wrap.style.overflowX=scale<0.999 ? 'hidden' : 'auto';
+}
+window.addEventListener('resize',resizeSheet);
+window.addEventListener('orientationchange',()=>setTimeout(resizeSheet,100));
+
+function bind(){
+ $('loginBtn').type='button';$('loginBtn').onclick=doLogin;$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+ $('logoutBtn').onclick=()=>auth.signOut();$('navCompanies').onclick=async()=>{await loadCompanies();show('companiesView')};$('navNew').onclick=startNewRecord;$('newCompanyBtn').onclick=createCompany;$('backCompanies').onclick=async()=>{show('companiesView');await loadCompanies()};$('backRecords').onclick=async()=>{show('recordsView');await loadRecords()};$('newRecordBtn').onclick=startNewRecord;$('newFormBtn').onclick=startNewRecord;$('saveBtn').onclick=()=>saveRecord(false);$('printBtn').onclick=()=>saveRecord(true);$('recordSearch').oninput=renderRecords;
+ buildTools();
+ setTimeout(resizeSheet,50);
+}
+window.addEventListener('error',e=>console.error('MAE JS',e.error||e.message));
+window.addEventListener('unhandledrejection',e=>console.error('MAE promise',e.reason));
+bind();
+auth.onAuthStateChanged(async user=>{if(user){$('login').classList.add('hidden');$('app').classList.remove('hidden');$('currentUser').textContent=user.email||'';await loadCompanies();show('companiesView')}else{$('app').classList.add('hidden');$('login').classList.remove('hidden')}});
+})();
+</script>
+</body>
+</html>
